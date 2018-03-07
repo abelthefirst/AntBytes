@@ -2,7 +2,6 @@ package houtbecke.rs.antbytes;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -108,57 +107,19 @@ public class AntBytesImpl implements AntBytes {
     public <T>T instanceFromAntBytes(Class<? extends T> clazz, byte[] antBytes) {
         try {
             T result = clazz.newInstance();
-            return fromAntBytes(result, antBytes);
+            fromAntBytes(result, clazz, antBytes);
+
+            return result;
         } catch (InstantiationException e) {
             return null;
         } catch (IllegalAccessException e) {
             return null;
         }
-
     }
 
     @Override
     public <T>T fromAntBytes(T object, byte[] antBytes) {
-        for (Field f: object.getClass().getDeclaredFields())
-            for (Annotation anon: f.getAnnotations()) {
-                Class type = anon.annotationType();
-                if (type == U8BIT.class) {
-                    U8BIT u8bit = (U8BIT) anon;
-                    setIntOnField(f, object, BitBytes.input(antBytes, u8bit.value(), u8bit.startBit(), 8));
-                } else if (type == U16BIT.class) {
-                    U16BIT u16bit = (U16BIT) anon;
-                    setIntOnField(f, object, BitBytes.input(antBytes, u16bit.value(), u16bit.startBit(), 16));
-                } else if (type == U32BIT.class) {
-                    U32BIT u32bit = (U32BIT)anon;
-                    setLongOnField(f, object, BitBytes.input(antBytes, u32bit.value(), u32bit.startBit(), 32));
-                } else if (type == LSBU16BIT.class) {
-                    LSBU16BIT lsbu16bit = (LSBU16BIT) anon;
-                    setIntOnField(f, object, BitBytes.inputLSB(antBytes, lsbu16bit.value(), lsbu16bit.startBit(), 16));
-                } else if (type == LSBU32BIT.class) {
-                    LSBU32BIT u32bit = (LSBU32BIT)anon;
-                    setLongOnField(f, object, BitBytes.inputLSB(antBytes, u32bit.value(), u32bit.startBit(), 32));
-                } else if (type == LSBUXBIT.class) {
-                    LSBUXBIT uxbit = (LSBUXBIT) anon;
-                    setLongOnField(f, object, BitBytes.inputLSB(antBytes, uxbit.value(), uxbit.startBit(), uxbit.bitLength()));
-                } else if (type == UXBIT.class) {
-                    UXBIT uxbit = (UXBIT) anon;
-                    setLongOnField(f, object, BitBytes.input(antBytes, uxbit.value(), uxbit.startBit(), uxbit.bitLength()));
-                } else if (type == S8BIT.class) {
-                    S8BIT s8bit = (S8BIT) anon;
-                    setIntOnField(f, object, BitBytes.input(antBytes, s8bit.value(), s8bit.startBit(), 8,true));
-                } else if (type == S16BIT.class) {
-                    S16BIT s16bit = (S16BIT) anon;
-                    setIntOnField(f, object, BitBytes.input(antBytes, s16bit.value(), s16bit.startBit(), 16,true));
-                } else if (type == S32BIT.class) {
-                    S32BIT s32bit = (S32BIT)anon;
-                    setLongOnField(f, object, BitBytes.input(antBytes, s32bit.value(), s32bit.startBit(), 32,true));
-                } else if (type == SXBIT.class) {
-                    SXBIT sxbit = (SXBIT) anon;
-                    setLongOnField(f, object, BitBytes.input(antBytes, sxbit.value(), sxbit.startBit(), sxbit.bitLength(),true));
-                } else if (type == Page.class) {
-                    setIntOnField(f, object, BitBytes.input(antBytes, 0, 8));
-                }
-            }
+        fromAntBytes(object, object.getClass(), antBytes);
 
         return object;
     }
@@ -268,4 +229,49 @@ public class AntBytesImpl implements AntBytes {
             return null;
         return instanceFromAntBytes(clazz, antBytes);
     }
+
+    private <T> void fromAntBytes(T object, Class<? extends T> clazz, byte[] antBytes) {
+        for (Field f: clazz.getDeclaredFields()) {
+            for (Annotation anon : f.getAnnotations()) {
+                Class type = anon.annotationType();
+                if (type == U8BIT.class) {
+                    U8BIT u8bit = (U8BIT) anon;
+                    setIntOnField(f, object, BitBytes.input(antBytes, u8bit.value(), u8bit.startBit(), 8));
+                } else if (type == U16BIT.class) {
+                    U16BIT u16bit = (U16BIT) anon;
+                    setIntOnField(f, object, BitBytes.input(antBytes, u16bit.value(), u16bit.startBit(), 16));
+                } else if (type == U32BIT.class) {
+                    U32BIT u32bit = (U32BIT) anon;
+                    setLongOnField(f, object, BitBytes.input(antBytes, u32bit.value(), u32bit.startBit(), 32));
+                } else if (type == LSBU16BIT.class) {
+                    LSBU16BIT lsbu16bit = (LSBU16BIT) anon;
+                    setIntOnField(f, object, BitBytes.inputLSB(antBytes, lsbu16bit.value(), lsbu16bit.startBit(), 16));
+                } else if (type == LSBU32BIT.class) {
+                    LSBU32BIT u32bit = (LSBU32BIT) anon;
+                    setLongOnField(f, object, BitBytes.inputLSB(antBytes, u32bit.value(), u32bit.startBit(), 32));
+                } else if (type == LSBUXBIT.class) {
+                    LSBUXBIT uxbit = (LSBUXBIT) anon;
+                    setLongOnField(f, object, BitBytes.inputLSB(antBytes, uxbit.value(), uxbit.startBit(), uxbit.bitLength()));
+                } else if (type == UXBIT.class) {
+                    UXBIT uxbit = (UXBIT) anon;
+                    setLongOnField(f, object, BitBytes.input(antBytes, uxbit.value(), uxbit.startBit(), uxbit.bitLength()));
+                } else if (type == S8BIT.class) {
+                    S8BIT s8bit = (S8BIT) anon;
+                    setIntOnField(f, object, BitBytes.input(antBytes, s8bit.value(), s8bit.startBit(), 8, true));
+                } else if (type == S16BIT.class) {
+                    S16BIT s16bit = (S16BIT) anon;
+                    setIntOnField(f, object, BitBytes.input(antBytes, s16bit.value(), s16bit.startBit(), 16, true));
+                } else if (type == S32BIT.class) {
+                    S32BIT s32bit = (S32BIT) anon;
+                    setLongOnField(f, object, BitBytes.input(antBytes, s32bit.value(), s32bit.startBit(), 32, true));
+                } else if (type == SXBIT.class) {
+                    SXBIT sxbit = (SXBIT) anon;
+                    setLongOnField(f, object, BitBytes.input(antBytes, sxbit.value(), sxbit.startBit(), sxbit.bitLength(), true));
+                } else if (type == Page.class) {
+                    setIntOnField(f, object, BitBytes.input(antBytes, 0, 8));
+                }
+            }
+        }
+    }
+
 }
